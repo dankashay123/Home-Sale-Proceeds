@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seller Net Proceeds — Unincorporated King County / Renton</title>
+<style>
+  :root{
+    --paper:#f4f6f3;
+    --card:#ffffff;
+    --ink:#1a201d;
+    --ink-soft:#5d6763;
+    --ink-faint:#98a29d;
+    --rule:#d8ded9;
+    --rule-hard:#b3bdb7;
+    --debit:#8a4b3c;
+    --credit:#2d7a5f;
+    --net:#1a6b4d;
+    --net-wash:#e8f2ed;
+    --tax-wash:#f1efe8;
+    --tax-ink:#6b5a34;
+    --warn:#9a5b16;
+    --warn-wash:#fbf1e4;
+    --slate:#2c3a35;
+    --body-text:#3c4642;
+    --hover:#f7f9f6;
+    --code-bg:#eaeee9;
+    --callout-ink:#6d4310;
+    --callout-ink-strong:#4f3009;
+    --head-ink:#ffffff;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  html[data-theme="dark"]{
+    --paper:#161a18;
+    --card:#1e2523;
+    --ink:#f2f6f4;
+    --ink-soft:#cdd6d1;
+    --ink-faint:#96a19c;
+    --rule:#303a36;
+    --rule-hard:#4a5551;
+    --debit:#e6ab94;
+    --credit:#86dcb5;
+    --net:#63d6a6;
+    --net-wash:#17332a;
+    --tax-wash:#2b2822;
+    --tax-ink:#e0d2ad;
+    --warn:#eeb475;
+    --warn-wash:#332a1c;
+    --slate:#0e1311;
+    --body-text:#e4eae7;
+    --hover:#252d2a;
+    --code-bg:#2b3532;
+    --callout-ink:#f0d6b4;
+    --callout-ink-strong:#ffe9cc;
+    --head-ink:#f2f6f4;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 20px 64px}
+
+  /* ---------- masthead + tabs ---------- */
+  .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:2px solid var(--slate)}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin:0 0 6px}
+  h1{margin:0;font-size:clamp(24px,4.2vw,34px);line-height:1.05;font-weight:650;letter-spacing:-.02em}
+  .sub{margin:8px 0 0;color:var(--ink-soft);font-size:13px;max-width:56ch}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  .btn{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.02em;background:var(--slate);color:var(--head-ink);border:none;border-radius:2px;padding:11px 18px;cursor:pointer;transition:background .15s ease}
+  .btn:hover{filter:brightness(1.35)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule-hard)}
+  .btn.ghost:hover{background:var(--hover);filter:none}
+  .btn:focus-visible{outline:2px solid var(--net);outline-offset:2px}
+
+  .tabs{display:flex;gap:0;margin-top:18px;border-bottom:1px solid var(--rule)}
+  .tab{font-family:var(--sans);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+       background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-faint);
+       padding:11px 2px;margin-right:26px;cursor:pointer;transition:color .15s ease,border-color .15s ease}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--net)}
+  .tab:focus-visible{outline:2px solid var(--net);outline-offset:2px}
+
+  /* ---------- collapsible input panels ---------- */
+  .panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;margin-top:16px}
+  .panel > summary{list-style:none;cursor:pointer;padding:15px 22px;display:flex;align-items:center;gap:12px;
+    border-radius:3px;transition:background .12s ease}
+  .panel > summary::-webkit-details-marker{display:none}
+  .panel > summary:hover{background:var(--hover)}
+  .panel > summary:focus-visible{outline:2px solid var(--net);outline-offset:-2px}
+  .chev{flex:none;width:9px;height:9px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);
+    transform:rotate(-45deg);transition:transform .18s ease;margin-top:-2px}
+  .panel[open] > summary .chev{transform:rotate(45deg);margin-top:-4px}
+  .sum-text{flex:1;min-width:0}
+  .sum-title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--ink)}
+  .sum-note{font-size:12px;color:var(--ink-faint);margin-top:3px}
+  .panel-body{padding:2px 22px 22px}
+
+  .fields{display:grid;gap:16px 22px;grid-template-columns:repeat(auto-fit,minmax(172px,1fr))}
+  .field label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+  .input-shell{display:flex;align-items:center;gap:2px;border:1px solid var(--rule-hard);border-radius:2px;background:#fff;padding:0 10px;transition:border-color .15s ease, box-shadow .15s ease}
+  .input-shell:focus-within{border-color:var(--net);box-shadow:0 0 0 3px var(--net-wash)}
+  .input-shell .affix{font-family:var(--mono);font-size:14px;color:var(--ink-soft)}
+  .input-shell input,.input-shell select{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:15px;color:var(--ink);padding:10px 0;font-variant-numeric:tabular-nums}
+  .input-shell select{font-family:var(--sans);cursor:pointer}
+  .scenario-field label{color:var(--slate)}
+  .scenario-field .input-shell{border-color:var(--slate);border-width:1.5px}
+
+  .check{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink-soft);line-height:1.35;padding-top:4px}
+  .check input{margin:2px 0 0;accent-color:var(--net);width:15px;height:15px;flex:none}
+  .checks{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:16px;padding-top:15px;border-top:1px solid var(--rule)}
+
+  /* ---------- result cards ---------- */
+  .cards{display:grid;gap:18px;margin-top:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:3px;display:flex;flex-direction:column;overflow:hidden}
+  .card-head{background:var(--slate);color:var(--head-ink);padding:14px 18px 15px}
+  .card-head .tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.7;font-weight:600}
+  .card-head .price{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
+
+  .sect{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--ink-faint);padding:14px 18px 2px}
+  .ledger{padding:0 18px}
+  .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule)}
+  .row:last-child{border-bottom:none}
+  .row .lbl{font-size:13px;color:var(--ink-soft)}
+  .row .lbl .hint{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:2px}
+  .row .amt{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--debit);text-align:right}
+  .row .amt .hint{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:2px;font-weight:400}
+  .row .amt.credit{color:var(--credit)}
+  .row .amt.neutral{color:var(--ink-soft)}
+  .row.subtotal{border-top:1.5px solid var(--rule-hard);border-bottom:none}
+  .row.subtotal .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink)}
+  .row.subtotal .amt{color:var(--ink);font-weight:600}
+
+  .net{background:var(--net-wash);border-top:2px solid var(--net);padding:15px 18px 16px;margin-top:14px}
+  .net .cap{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--net)}
+  .net .val{font-family:var(--mono);font-size:clamp(23px,3.2vw,29px);font-weight:700;color:var(--net);letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+  .net .val.negative{color:#a32a1e}
+  .net .delta{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-top:5px;font-variant-numeric:tabular-nums}
+
+  .taxblock{background:var(--tax-wash);padding-bottom:6px}
+  .taxblock .sect{color:var(--tax-ink);opacity:.75}
+  .taxblock .row{border-bottom-color:#e2ded1}
+  .taxblock .row.subtotal{border-top-color:#cdc6b2}
+  .flag{margin:8px 18px 10px;padding:9px 11px;border-radius:2px;font-size:11.5px;line-height:1.35;background:var(--warn-wash);color:var(--warn);border-left:3px solid var(--warn)}
+  .flag.ok{background:var(--net-wash);color:var(--net);border-left-color:var(--net)}
+
+  .final{background:var(--slate);color:var(--head-ink);padding:15px 18px 17px;margin-top:auto}
+  .final .cap{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.65}
+  .final .val{font-family:var(--mono);font-size:clamp(22px,3vw,27px);font-weight:700;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+  .final .delta{font-family:var(--mono);font-size:11.5px;opacity:.6;margin-top:5px;font-variant-numeric:tabular-nums}
+
+  .alloc{display:flex;height:7px;margin:14px 18px 0;border-radius:1px;overflow:hidden;background:var(--rule)}
+  .alloc span{display:block;height:100%}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 12px;padding:9px 18px 4px;font-size:10px;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase}
+  .legend i{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:1px;vertical-align:middle}
+
+  .hidden{display:none !important}
+  .toolbar{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+  /* ---------- guide ---------- */
+  .guide{max-width:76ch;margin-top:10px}
+  .guide h2{font-size:21px;color:var(--ink);font-weight:650;letter-spacing:-.01em;margin:34px 0 4px;padding-top:20px;border-top:1px solid var(--rule)}
+  .guide h2:first-of-type{border-top:none;padding-top:6px;margin-top:16px}
+  .guide h3{font-size:15.5px;font-weight:650;margin:24px 0 6px;color:var(--ink)}
+  .guide p{margin:11px 0;color:var(--body-text);font-size:16px;line-height:1.62}
+  .guide ul,.guide ol{margin:11px 0;padding-left:20px;color:var(--body-text);font-size:16px;line-height:1.62}
+  .guide li{margin-bottom:8px}
+  .guide strong{color:var(--ink);font-weight:650}
+  .lede{font-size:17.5px;color:var(--ink-soft);line-height:1.55}
+  code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--ink);padding:1px 5px;border-radius:2px}
+
+  .deftable{width:100%;border-collapse:collapse;margin:14px 0 4px;font-size:15px;line-height:1.55}
+  .deftable th{text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);
+    font-weight:700;padding:0 12px 7px 0;border-bottom:1.5px solid var(--rule-hard)}
+  .deftable td{vertical-align:top;padding:12px 14px 12px 0;border-bottom:1px solid var(--rule);color:var(--body-text)}
+  .deftable td:first-child{width:31%;font-weight:600;color:var(--ink)}
+  .deftable td:last-child{padding-right:0}
+
+  .callout{background:var(--warn-wash);border-left:3px solid var(--warn);padding:13px 15px;margin:16px 0;
+    font-size:15px;line-height:1.55;color:var(--callout-ink);border-radius:2px}
+  .callout strong{color:var(--callout-ink-strong)}
+  .calc{background:#fff;border:1px solid var(--rule);border-radius:2px;padding:14px 16px;margin:14px 0;
+    font-family:var(--mono);font-size:13.5px;line-height:1.8;color:var(--body-text);overflow-x:auto}
+  .calc b{color:var(--ink);font-weight:600}
+
+  .foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-soft);max-width:82ch}
+  .foot strong{color:var(--ink);font-weight:600}
+  .foot ul{margin:8px 0 14px;padding-left:18px}
+  .foot li{margin-bottom:4px}
+
+  @media print{
+    @page{margin:10mm}
+    html[data-theme="dark"]{
+      --paper:#f4f6f3; --card:#fff; --ink:#1a201d; --ink-soft:#5d6763; --ink-faint:#98a29d;
+      --rule:#d8ded9; --rule-hard:#b3bdb7; --debit:#8a4b3c; --credit:#2d7a5f; --net:#1a6b4d;
+      --net-wash:#e8f2ed; --tax-wash:#f1efe8; --warn:#9a5b16; --warn-wash:#fbf1e4;
+      --slate:#2c3a35; --body-text:#3c4642; --code-bg:#eaeee9;
+      --callout-ink:#6d4310; --callout-ink-strong:#4f3009; --head-ink:#ffffff;
+    }
+    body{background:#fff;font-size:10px}
+    .guide p,.guide ul,.guide ol,.deftable,.callout,.calc{font-size:10px}
+    .wrap{max-width:none;padding:0}
+    .btn,.tabs,.toolbar,.no-print{display:none !important}
+    .panel,.card{border-color:#999;break-inside:avoid}
+    .panel > summary{padding-bottom:4px}
+    .cards{grid-template-columns:repeat(3,1fr);gap:8px}
+    .card-head,.final{background:#2c3a35 !important}
+    .net{background:#e8f2ed !important}
+    .taxblock{background:#f1efe8 !important}
+    .guide{max-width:none}
+    .guide h2{break-after:avoid}
+    .deftable{font-size:9px}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<script>document.documentElement.setAttribute("data-theme","dark");</script>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Estimated settlement + after-tax worksheet</p>
+      <h1>Seller Net Proceeds</h1>
+      <p class="sub">Three list prices, side by side. Excise tax at 0.50% local (identical for unincorporated King County and Renton city limits) on top of the state graduated schedule.</p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="themeBtn" type="button">Light mode</button>
+      <button class="btn" id="printBtn" type="button">Print / Save to PDF</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tabCalc" role="tab" aria-selected="true" aria-controls="viewCalc" type="button">Calculator</button>
+    <button class="tab" id="tabGuide" role="tab" aria-selected="false" aria-controls="viewGuide" type="button">Guide</button>
+  </div>
+
+  <!-- ============================= CALCULATOR ============================= -->
+  <div id="viewCalc" role="tabpanel" aria-labelledby="tabCalc">
+
+    <div class="toolbar no-print">
+      <button class="btn ghost" id="expandAll" type="button">Expand all</button>
+      <button class="btn ghost" id="collapseAll" type="button">Collapse all</button>
+      <button class="btn ghost" id="toggleTax" type="button">Hide tax detail</button>
+    </div>
+
+    <details class="panel" open>
+      <summary><span class="chev"></span><span class="sum-text"><span class="sum-title">Sale prices</span><span class="sum-note">The three scenarios being compared.</span></span></summary>
+      <div class="panel-body">
+        <div class="fields">
+          <div class="field scenario-field"><label for="p1">Scenario 1</label><div class="input-shell"><span class="affix">$</span><input id="p1" type="text" inputmode="decimal" value="925,000"></div></div>
+          <div class="field scenario-field"><label for="p2">Scenario 2</label><div class="input-shell"><span class="affix">$</span><input id="p2" type="text" inputmode="decimal" value="900,000"></div></div>
+          <div class="field scenario-field"><label for="p3">Scenario 3</label><div class="input-shell"><span class="affix">$</span><input id="p3" type="text" inputmode="decimal" value="880,000"></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary><span class="chev"></span><span class="sum-text"><span class="sum-title">Costs of sale</span><span class="sum-note">Commissions, concessions, escrow, and the loan being paid off. Applied identically to all three scenarios.</span></span></summary>
+      <div class="panel-body">
+        <div class="fields">
+          <div class="field"><label for="listPct">Listing agent</label><div class="input-shell"><input id="listPct" type="text" inputmode="decimal" value="2.50"><span class="affix">%</span></div></div>
+          <div class="field"><label for="buyPct">Buyer agent</label><div class="input-shell"><input id="buyPct" type="text" inputmode="decimal" value="2.00"><span class="affix">%</span></div></div>
+          <div class="field"><label for="fixed">Fixed closing costs</label><div class="input-shell"><span class="affix">$</span><input id="fixed" type="text" inputmode="decimal" value="4,007"></div></div>
+          <div class="field"><label for="concess">Buyer concessions</label><div class="input-shell"><span class="affix">$</span><input id="concess" type="text" inputmode="decimal" value="0"></div></div>
+          <div class="field"><label for="payoff">Mortgage payoff</label><div class="input-shell"><span class="affix">$</span><input id="payoff" type="text" inputmode="decimal" value="700,000"></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary><span class="chev"></span><span class="sum-text"><span class="sum-title">Closing date and property tax proration</span><span class="sum-note">King County bills in halves: Jan 1 to Jun 30 (due Apr 30) and Jul 1 to Dec 31 (due Oct 31).</span></span></summary>
+      <div class="panel-body">
+        <div class="fields">
+          <div class="field"><label for="closeDate">Closing date</label><div class="input-shell"><input id="closeDate" type="date" value="2026-09-30"></div></div>
+          <div class="field"><label for="annualTax">Annual property tax</label><div class="input-shell"><span class="affix">$</span><input id="annualTax" type="text" inputmode="decimal" value="9,200"></div></div>
+          <div class="field"><label for="taxPaid">Paid so far this year</label><div class="input-shell"><select id="taxPaid"><option value="0">Nothing paid</option><option value="0.5" selected>First half paid</option><option value="1">Full year paid</option></select></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary><span class="chev"></span><span class="sum-text"><span class="sum-title">Federal capital gain</span><span class="sum-note">Not paid at closing. Estimated so the after-tax number sits next to the cash number.</span></span></summary>
+      <div class="panel-body">
+        <div class="fields">
+          <div class="field"><label for="buyDate">Purchase date</label><div class="input-shell"><input id="buyDate" type="date" value="2025-08-01"></div></div>
+          <div class="field"><label for="buyPrice">Purchase price</label><div class="input-shell"><span class="affix">$</span><input id="buyPrice" type="text" inputmode="decimal" value="800,000"></div></div>
+          <div class="field"><label for="buyCosts">Buy-side closing costs</label><div class="input-shell"><span class="affix">$</span><input id="buyCosts" type="text" inputmode="decimal" value="0"></div></div>
+          <div class="field"><label for="improve">Capital improvements</label><div class="input-shell"><span class="affix">$</span><input id="improve" type="text" inputmode="decimal" value="0"></div></div>
+          <div class="field"><label for="filing">Filing status</label><div class="input-shell"><select id="filing"><option value="250000">Single / MFS</option><option value="500000" selected>Married filing jointly</option></select></div></div>
+          <div class="field"><label for="ltRate">Long-term rate</label><div class="input-shell"><select id="ltRate"><option value="0">0%</option><option value="15" selected>15%</option><option value="20">20%</option></select></div></div>
+          <div class="field"><label for="ordRate">Ordinary rate if short-term</label><div class="input-shell"><input id="ordRate" type="text" inputmode="decimal" value="24.00"><span class="affix">%</span></div></div>
+        </div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="niit"><span>Apply 3.8% net investment income tax</span></label>
+          <label class="check"><input type="checkbox" id="partial"><span>Qualify for partial exclusion (job change, health, unforeseen circumstances)</span></label>
+          <label class="check"><input type="checkbox" id="recentClaim"><span>Already claimed Section 121 on another sale within the last 2 years</span></label>
+        </div>
+      </div>
+    </details>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="foot">
+      <strong>Verified against source.</strong> State graduated REET thresholds and rates are per the Washington Department of Revenue REET page. The 0.50% local rate is per DOR's local rate table effective May 1, 2026, location code 1700 (King County Unincorp.); Renton, code 1725, is also 0.50%. DOR applies a $5.00 state technology fee to every transfer.
+      <ul>
+        <li><strong>Threshold expiry.</strong> DOR readjusts the price thresholds periodically and the current values date to January 1, 2023. If closing slips into 2027, re-pull the rate sheet.</li>
+        <li><strong>Section 121.</strong> Requires 2 years of ownership and use within the 5 years before sale. Under 2 years with no qualifying exception means no exclusion at all. Under 1 year of ownership means short-term ordinary rates.</li>
+        <li><strong>No Washington capital gains tax on real estate.</strong> Real property is explicitly excluded from the state excise. Only federal applies.</li>
+        <li><strong>Still not modeled.</strong> HOA dues and transfer fees, per-diem interest and reconveyance fees inside the payoff, repair credits negotiated after inspection, home warranty, and junior liens.</li>
+        <li>Estimate only, and not tax advice. The escrow settlement statement governs the cash number. A CPA governs the tax number.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================= GUIDE ============================= -->
+  <div id="viewGuide" class="guide hidden" role="tabpanel" aria-labelledby="tabGuide">
+
+    <h2>What this is</h2>
+    <p class="lede">A worksheet that estimates how much money a seller actually walks away with, at three different sale prices, for a house in unincorporated King County or the city of Renton.</p>
+    <p>Most online calculators give you one number and hide the assumptions. This one shows every deduction as its own line so you can argue with any of them, and it separates the money you receive at the closing table from the money you keep after taxes. Those are two different numbers that arrive at two different times, and treating them as one is the most common way sellers get surprised.</p>
+
+    <h2>How to use it</h2>
+    <ol>
+      <li><strong>Enter three prices you're actually considering.</strong> They should be close together. The point is to see what a $20,000 or $45,000 price change really costs you, which is never the full amount.</li>
+      <li><strong>Fill in the costs of sale.</strong> Commission percentages come from your listing agreement. Fixed closing costs come from an escrow quote or a net sheet.</li>
+      <li><strong>Set the closing date.</strong> It drives the property tax proration and the capital gains holding period. Both change with the calendar.</li>
+      <li><strong>Fill in the capital gain section.</strong> This is the part most calculators skip, and for a recently purchased home it can be the largest number on the page.</li>
+      <li><strong>Read the two bottom lines.</strong> The green figure is cash at closing. The dark figure is what you keep after federal tax.</li>
+    </ol>
+    <p>Everything recalculates as you type. Nothing is saved and nothing is sent anywhere; the file runs entirely in your browser.</p>
+
+    <h2>Every field, explained</h2>
+
+    <h3>Sale prices</h3>
+    <table class="deftable">
+      <tr><th>Field</th><th>What to enter</th></tr>
+      <tr><td>Scenario 1, 2, 3</td><td>Three prices you're weighing. Scenario 1 becomes the baseline that the other two are compared against. Use the price you expect to actually sell at, not the list price, if you expect to negotiate.</td></tr>
+    </table>
+
+    <h3>Costs of sale</h3>
+    <table class="deftable">
+      <tr><th>Field</th><th>What to enter</th></tr>
+      <tr><td>Listing agent</td><td>The percentage your own agent's brokerage charges. From your listing agreement. Negotiable.</td></tr>
+      <tr><td>Buyer agent</td><td>What you're offering to the buyer's agent. Since 2024 this is no longer advertised through the MLS and is negotiated deal by deal, but most sellers still pay something. Also negotiable, and often the first thing to move in a slow market.</td></tr>
+      <tr><td>Fixed closing costs</td><td>Escrow fee, title insurance policy, recording fee, document preparation. Ask escrow for a quote or take it from an agent's net sheet. It barely changes with sale price, which is why it's a flat dollar figure here.</td></tr>
+      <tr><td>Buyer concessions</td><td>Money you agree to credit the buyer, usually toward their loan costs or to settle a repair request after inspection. Enter zero at listing, then update it once you're in negotiation. This line is where deals quietly get more expensive.</td></tr>
+      <tr><td>Mortgage payoff</td><td>What you owe the lender. Not your statement balance. Request a written payoff quote good through your closing date; it includes interest accruing to that day plus a reconveyance or release fee, so it always comes in higher than the balance you see online.</td></tr>
+    </table>
+
+    <h3>Closing date and property tax proration</h3>
+    <table class="deftable">
+      <tr><th>Field</th><th>What to enter</th></tr>
+      <tr><td>Closing date</td><td>The day the sale records. Drives both the tax proration and the capital gains holding period.</td></tr>
+      <tr><td>Annual property tax</td><td>Your full-year bill. Look up the parcel on the King County Assessor's eReal Property tool, or read it off your most recent tax statement.</td></tr>
+      <tr><td>Paid so far this year</td><td>Whether you've paid nothing, the first half, or the full year. If a lender pays your taxes out of escrow, check with them rather than assuming.</td></tr>
+    </table>
+    <p>You owe property tax for the days you owned the house. If you've prepaid past your closing date, the buyer reimburses you and the line shows as a credit in green. If you're behind, you're debited at settlement. It is almost never zero, which is why a net sheet showing $0.00 on this line is a placeholder rather than a calculation.</p>
+
+    <h3>Federal capital gain</h3>
+    <table class="deftable">
+      <tr><th>Field</th><th>What to enter</th></tr>
+      <tr><td>Purchase date</td><td>When you bought. This determines whether you qualify for the exclusion described below, so get it exactly right.</td></tr>
+      <tr><td>Purchase price</td><td>What you paid, from your closing statement.</td></tr>
+      <tr><td>Buy-side closing costs</td><td>Costs you paid when buying that add to your basis: title, escrow, recording, transfer taxes, survey, legal. Not loan points, prepaid interest, or prepaid property tax.</td></tr>
+      <tr><td>Capital improvements</td><td>Money spent on things that add value or extend the life of the house: a new roof, a remodeled kitchen, an added bathroom, new landscaping hardscape. Not repairs, not maintenance, not painting. Keep receipts; the IRS asks for them, not for your memory.</td></tr>
+      <tr><td>Filing status</td><td>Sets the exclusion cap: $250,000 single or married filing separately, $500,000 married filing jointly.</td></tr>
+      <tr><td>Long-term rate</td><td>Your federal long-term capital gains bracket: 0%, 15%, or 20%, depending on total taxable income. Most sellers are at 15%.</td></tr>
+      <tr><td>Ordinary rate if short-term</td><td>Only used when you've owned the house a year or less. In that case the gain is taxed as regular income at your marginal bracket, not at capital gains rates.</td></tr>
+      <tr><td>3.8% net investment income tax</td><td>An extra federal surtax that applies to investment income above certain income thresholds. Check with your CPA if your household income is high.</td></tr>
+      <tr><td>Partial exclusion</td><td>If you're selling before the 2-year mark because of a job relocation, a health issue, or another qualifying unforeseen circumstance, you may claim a prorated share of the exclusion. Checking this box prorates the cap by days held.</td></tr>
+      <tr><td>Already claimed within 2 years</td><td>The exclusion can only be used once every two years. If you used it on another home sale recently, check this and the exclusion drops to zero.</td></tr>
+    </table>
+
+    <h2>Every line on the results card</h2>
+    <table class="deftable">
+      <tr><th>Line</th><th>What it means</th></tr>
+      <tr><td>Listing commission</td><td>Sale price times the listing percentage.</td></tr>
+      <tr><td>Buyer agent commission</td><td>Sale price times the buyer agent percentage.</td></tr>
+      <tr><td>Buyer concessions</td><td>The flat credit you agreed to give the buyer.</td></tr>
+      <tr><td>Excise tax (REET)</td><td>Washington's real estate excise tax, paid by the seller. Calculated in tiers, explained below. The small percentage shown underneath is the effective blended rate across all tiers, which is what escrow will quote you.</td></tr>
+      <tr><td>State technology fee</td><td>A flat $5.00 the Department of Revenue applies to every transfer.</td></tr>
+      <tr><td>Fixed closing costs</td><td>The escrow and title figure you entered.</td></tr>
+      <tr><td>Total costs of sale</td><td>The six lines above, added up. This is the number that reduces both your cash and your taxable gain.</td></tr>
+      <tr><td>Property tax proration</td><td>Green means the buyer reimburses you. The default red means you owe at settlement.</td></tr>
+      <tr><td>Mortgage payoff</td><td>The loan balance you entered. Note this reduces your cash but has nothing to do with your taxable gain; the IRS taxes the gain on the property, not the equity you happen to have.</td></tr>
+      <tr><td>Net cash at closing</td><td>The wire you receive. Sale price, minus costs of sale, plus or minus the tax proration, minus the payoff.</td></tr>
+      <tr><td>Amount realized</td><td>Sale price minus costs of sale. The starting point for the tax calculation.</td></tr>
+      <tr><td>Adjusted basis</td><td>Purchase price plus buy-side closing costs plus capital improvements. What the house "cost" you in the eyes of the IRS.</td></tr>
+      <tr><td>Gain</td><td>Amount realized minus adjusted basis. Your profit for tax purposes, which is usually smaller than the difference between what you paid and what you sold for.</td></tr>
+      <tr><td>Section 121 exclusion</td><td>The portion of the gain the IRS lets you keep tax-free, if you qualify.</td></tr>
+      <tr><td>Taxable gain</td><td>What's left after the exclusion. Often zero.</td></tr>
+      <tr><td>Estimated federal tax</td><td>Taxable gain times the applicable rate.</td></tr>
+      <tr><td>Net after federal tax</td><td>Cash at closing minus that estimated tax. The number that actually reflects what you keep.</td></tr>
+    </table>
+    <p>The thin colored bar in the middle of each card shows the same information proportionally: how the full sale price splits between each cost, the loan payoff, and what's left for you.</p>
+
+    <h2>How the excise tax works</h2>
+    <p>Washington charges the seller a real estate excise tax, or REET, on the <strong>full sale price</strong>. Not the profit, not the equity, not the amount above the mortgage. Sellers who break even still owe it in full.</p>
+    <p>It's tiered, so different slices of the price are taxed at different rates. Only the portion inside each band is taxed at that band's rate. The rates below combine the state's graduated schedule with the 0.50% local rate that applies in both unincorporated King County and the city of Renton.</p>
+    <table class="deftable">
+      <tr><th>Portion of sale price</th><th>Combined rate</th></tr>
+      <tr><td>Up to $525,000</td><td>1.60% (1.10% state + 0.50% local)</td></tr>
+      <tr><td>$525,000.01 to $1,525,000</td><td>1.78% (1.28% state + 0.50% local)</td></tr>
+      <tr><td>$1,525,000.01 to $3,025,000</td><td>3.25% (2.75% state + 0.50% local)</td></tr>
+      <tr><td>Above $3,025,000</td><td>3.50% (3.00% state + 0.50% local)</td></tr>
+    </table>
+    <p>Worked example at a $925,000 sale price:</p>
+    <div class="calc">
+      First $525,000 &times; 1.60% = <b>$8,400.00</b><br>
+      Next $400,000 &times; 1.78% = <b>$7,120.00</b><br>
+      &nbsp;<br>
+      Total excise tax = <b>$15,520.00</b><br>
+      Effective rate = 1.678%
+    </div>
+    <p>Because the tiers are marginal rather than all-or-nothing, pricing just under a threshold saves less than most people expect. The saving is only the rate difference on the amount above the line, not a rate change on the whole sale.</p>
+    <div class="callout"><strong>Verify before closing.</strong> The Department of Revenue readjusts these price thresholds periodically, and the current values took effect January 1, 2023. Local rates are republished on their own schedule. If your closing moves into a new year, pull the current rate sheet from the Department of Revenue rather than trusting this page.</div>
+
+    <h2>The two-year rule, in plain English</h2>
+    <p>Section 121 of the tax code lets you exclude up to $250,000 of gain from federal tax if you're single, or $500,000 if you're married filing jointly. It is the largest tax break most homeowners will ever get.</p>
+    <p>To qualify, you must have <strong>owned the home and lived in it as your main home for at least 2 years out of the 5 years before the sale</strong>. The two years don't have to be consecutive.</p>
+    <p>Three consequences worth understanding before you set a closing date:</p>
+    <ul>
+      <li><strong>It's a cliff, not a slope.</strong> At 729 days you get nothing and the entire gain is taxable. At 730 days you get the full exclusion. Nothing else in this worksheet behaves that way, and no commission negotiation is worth as much as clearing that date.</li>
+      <li><strong>Under one year is worse still.</strong> Owning for 12 months or less makes the gain short-term, which means it's taxed as ordinary income at your regular bracket instead of at capital gains rates.</li>
+      <li><strong>There are exceptions.</strong> Selling early because of a job relocation, a health problem, or certain unforeseen circumstances can earn you a prorated portion of the exclusion. The rules are specific. Ask a CPA rather than assuming you qualify.</li>
+    </ul>
+    <p>Each results card carries a colored flag showing how long the home has been held and the exact date the two-year test is met.</p>
+    <p><strong>Washington itself does not tax this.</strong> The state's capital gains excise tax specifically excludes all real estate, primary residence and investment property alike. Only the federal tax applies.</p>
+
+    <h2>What this worksheet does not include</h2>
+    <ul>
+      <li>HOA dues, transfer fees, and estoppel or resale certificate charges</li>
+      <li>Per-diem interest and reconveyance fees inside the loan payoff</li>
+      <li>Repair credits negotiated after the inspection, beyond whatever you enter as concessions</li>
+      <li>Home warranty, pest inspection, and other seller-elective items</li>
+      <li>Junior liens, judgments, second mortgages, or HELOC balances</li>
+      <li>Moving costs, storage, staging, and pre-listing repairs</li>
+      <li>Depreciation recapture, which applies if the home was ever a rental</li>
+      <li>State and local income tax, since Washington has none on this</li>
+    </ul>
+
+    <h2>Sources</h2>
+    <ul>
+      <li>Washington Department of Revenue, Real Estate Excise Tax: state graduated rate schedule, the $5.00 technology fee, and the $10.00 minimum due per transfer</li>
+      <li>Washington Department of Revenue, Local Real Estate Excise Tax Rates effective May 1, 2026: location code 1700, King County Unincorporated, at 0.50%; code 1725, Renton, also 0.50%</li>
+      <li>King County Assessor and Treasury: property tax installments due April 30 and October 31</li>
+      <li>26 U.S.C. Section 121: exclusion of gain from sale of a principal residence, and the 2-of-5-year ownership and use test</li>
+    </ul>
+    <div class="callout"><strong>This is an estimate, not advice.</strong> The escrow company's settlement statement governs what you actually receive at closing. A CPA governs what you actually owe in tax. Use this to ask them better questions, not to replace them.</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var REET_TIERS = [
+    { cap:  525000, rate: 0.0160 },
+    { cap: 1525000, rate: 0.0178 },
+    { cap: 3025000, rate: 0.0325 },
+    { cap: Infinity, rate: 0.0350 }
+  ];
+  var TECH_FEE = 5, MIN_DUE = 10, DAY = 86400000;
+  var showTax = true;
+
+  function reet(price){
+    if (price <= 0) return 0;
+    var tax = 0, prev = 0;
+    for (var i = 0; i < REET_TIERS.length; i++){
+      var t = REET_TIERS[i];
+      if (price <= prev) break;
+      tax += (Math.min(price, t.cap) - prev) * t.rate;
+      prev = t.cap;
+    }
+    return Math.max(tax, MIN_DUE - TECH_FEE);
+  }
+
+  function usd(n){
+    var s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+    return (n < 0 ? "-$" : "$") + s;
+  }
+  function usd0(n){ return "$" + Math.round(Math.abs(n)).toLocaleString("en-US"); }
+
+  function num(id){
+    var v = parseFloat(String(document.getElementById(id).value).replace(/[^0-9.\-]/g, ""));
+    return isFinite(v) ? v : 0;
+  }
+  function sel(id){ return parseFloat(document.getElementById(id).value) || 0; }
+  function chk(id){ return document.getElementById(id).checked; }
+  function dt(id){
+    var v = document.getElementById(id).value;
+    if (!v) return null;
+    var p = v.split("-");
+    return new Date(+p[0], +p[1]-1, +p[2]);
+  }
+  function daysBetween(a,b){ return (a && b) ? Math.round((b-a)/DAY) : 0; }
+  function isLeap(y){ return (y%4===0 && y%100!==0) || y%400===0; }
+  function addDays(d,n){ return d ? new Date(d.getTime()+n*DAY) : null; }
+  function fmtDate(d){ return d ? d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "\u2014"; }
+
+  function prorate(annual, close, paidFrac){
+    if (!close || annual <= 0) return 0;
+    var y = close.getFullYear();
+    var yearDays = isLeap(y) ? 366 : 365;
+    var owned = daysBetween(new Date(y,0,1), close);
+    return (annual * paidFrac) - (annual * (owned / yearDays));
+  }
+
+  var C = { list:"#8a4b3c", buy:"#b07a5e", conc:"#a56a52", reet:"#c8a97e", fixed:"#7d8a84", debt:"#2c3a35", net:"#1a6b4d" };
+
+  function build(price, g){
+    var listing = price * (g.listPct/100);
+    var buyer   = price * (g.buyPct/100);
+    var tax     = reet(price);
+    var selling = listing + buyer + g.concess + tax + TECH_FEE + g.fixed;
+    var netClosing = price - selling + g.prorate - g.payoff;
+
+    var realized = price - selling;
+    var basis    = g.buyPrice + g.buyCosts + g.improve;
+    var gain     = realized - basis;
+
+    var days = daysBetween(g.buyDate, g.closeDate);
+    var fullyEligible = days >= 730 && !g.recentClaim;
+    var longTerm = days > 365;
+
+    var exclusion = 0;
+    if (gain > 0 && !g.recentClaim){
+      if (fullyEligible) exclusion = Math.min(gain, g.cap);
+      else if (g.partial) exclusion = Math.min(gain, g.cap * Math.min(days,730) / 730);
+    }
+    var taxable = Math.max(0, gain - exclusion);
+    var rate = (longTerm ? g.ltRate : g.ordRate)/100 + (g.niit ? 0.038 : 0);
+    var fedTax = taxable * rate;
+
+    return { price:price, listing:listing, buyer:buyer, concess:g.concess, tax:tax, fixed:g.fixed,
+      selling:selling, prorate:g.prorate, payoff:g.payoff, netClosing:netClosing,
+      realized:realized, basis:basis, gain:gain, days:days, longTerm:longTerm,
+      fullyEligible:fullyEligible, exclusion:exclusion, taxable:taxable,
+      rate:rate, fedTax:fedTax, afterTax:netClosing - fedTax, buyDate:g.buyDate };
+  }
+
+  function bar(r){
+    var seg = [[r.listing,C.list],[r.buyer,C.buy],[r.concess,C.conc],
+      [r.tax+TECH_FEE,C.reet],[r.fixed,C.fixed],[r.payoff,C.debt],[Math.max(r.netClosing,0),C.net]];
+    var total = seg.reduce(function(a,s){ return a+s[0]; },0);
+    if (total <= 0) return "";
+    return seg.map(function(s){
+      return '<span style="width:'+((s[0]/total)*100).toFixed(3)+'%;background:'+s[1]+'"></span>';
+    }).join("");
+  }
+
+  function holdingFlag(r){
+    if (!r.days) return '<div class="flag">Enter a purchase date and closing date to evaluate the Section 121 holding period.</div>';
+    var mo = Math.floor(r.days/30.44), mark = fmtDate(addDays(r.buyDate,730));
+    if (r.fullyEligible) return '<div class="flag ok">Held '+mo+' months. Clears the 2-year test, full exclusion available.</div>';
+    if (r.days < 365) return '<div class="flag">Held '+mo+' months. Short-term: gain is taxed at ordinary income rates and no exclusion applies without a qualifying exception. The 2-year mark falls on '+mark+'.</div>';
+    return '<div class="flag">Held '+mo+' months. Long-term rates apply, but the 2-year test is not met so there is no full exclusion. The 2-year mark falls on '+mark+'.</div>';
+  }
+
+  function row(label, hint, amt, cls){
+    return '<div class="row"><span class="lbl">'+label+'<span class="hint">'+hint+'</span></span>'+
+           '<span class="amt '+(cls||"")+'">'+amt+'</span></div>';
+  }
+  function leg(color, text){ return '<span><i style="background:'+color+'"></i>'+text+'</span>'; }
+
+  function render(){
+    var closeDate = dt("closeDate");
+    var g = {
+      listPct:num("listPct"), buyPct:num("buyPct"), fixed:num("fixed"),
+      concess:num("concess"), payoff:num("payoff"),
+      closeDate:closeDate, buyDate:dt("buyDate"),
+      buyPrice:num("buyPrice"), buyCosts:num("buyCosts"), improve:num("improve"),
+      cap:sel("filing"), ltRate:sel("ltRate"), ordRate:num("ordRate"),
+      niit:chk("niit"), partial:chk("partial"), recentClaim:chk("recentClaim"),
+      prorate:prorate(num("annualTax"), closeDate, sel("taxPaid"))
+    };
+
+    var res = ["p1","p2","p3"].map(function(id){ return build(num(id), g); });
+    var base = res[0];
+
+    document.getElementById("cards").innerHTML = res.map(function(r,i){
+      var line = function(v){ return i===0 ? "Baseline" : (v>=0?"+":"\u2212")+usd0(v)+" vs. Scenario 1"; };
+      var pr = r.prorate;
+      var effRate = r.price > 0 ? ((r.tax/r.price)*100).toFixed(3) : "0.000";
+
+      var taxSection = !showTax ? "" :
+        '<div class="taxblock"><div class="sect">Federal capital gain</div>' + holdingFlag(r) + '<div class="ledger">' +
+          row("Amount realized","sale price less costs of sale",usd(r.realized),"neutral") +
+          row("Adjusted basis","purchase price, costs, improvements",usd(r.basis),"neutral") +
+          '<div class="row subtotal"><span class="lbl">'+(r.gain<0?"Loss":"Gain")+'</span><span class="amt">'+usd(r.gain)+'</span></div>' +
+          row("Section 121 exclusion",
+              r.fullyEligible ? "full exclusion applied" : (r.exclusion>0 ? "partial, prorated by days held" : "not available"),
+              usd(r.exclusion),"credit") +
+          row("Taxable gain", r.longTerm ? "long-term" : "short-term, ordinary rates", usd(r.taxable),"neutral") +
+          '<div class="row subtotal"><span class="lbl">Estimated federal tax</span>' +
+          '<span class="amt">'+usd(r.fedTax)+'<span class="hint">'+(r.rate*100).toFixed(1)+'% applied</span></span></div>' +
+        '</div></div>' +
+        '<div class="final"><div class="cap">Net after federal tax</div>' +
+          '<div class="val">'+usd(r.afterTax)+'</div>' +
+          '<div class="delta">'+line(r.afterTax - base.afterTax)+'</div></div>';
+
+      return '<article class="card">' +
+        '<div class="card-head"><div class="tag">Scenario '+(i+1)+' \u00b7 sale price</div><div class="price">'+usd(r.price)+'</div></div>' +
+
+        '<div class="sect">Costs of sale</div><div class="ledger">' +
+          row("Listing commission", g.listPct.toFixed(2)+"% of sale price", usd(r.listing)) +
+          row("Buyer agent commission", g.buyPct.toFixed(2)+"% of sale price", usd(r.buyer)) +
+          row("Buyer concessions","credit toward buyer costs",usd(r.concess)) +
+          row("Excise tax (REET)", effRate+"% effective, tiered", usd(r.tax)) +
+          row("State technology fee","flat, per transfer",usd(TECH_FEE)) +
+          row("Fixed closing costs","escrow, title, recording",usd(r.fixed)) +
+          '<div class="row subtotal"><span class="lbl">Total costs of sale</span><span class="amt">'+usd(r.selling)+'</span></div>' +
+        '</div>' +
+
+        '<div class="sect">Settlement adjustments</div><div class="ledger">' +
+          '<div class="row"><span class="lbl">Property tax proration<span class="hint">'+(pr>=0?"credit to seller":"seller owes")+'</span></span>' +
+          '<span class="amt '+(pr>=0?"credit":"")+'">'+usd(Math.abs(pr))+'</span></div>' +
+          row("Mortgage payoff","principal balance entered",usd(r.payoff)) +
+        '</div>' +
+
+        '<div class="alloc">'+bar(r)+'</div>' +
+        '<div class="legend">'+leg(C.list,"List")+leg(C.buy,"Buyer")+leg(C.conc,"Concess")+
+          leg(C.reet,"REET")+leg(C.fixed,"Closing")+leg(C.debt,"Payoff")+leg(C.net,"Net")+'</div>' +
+
+        '<div class="net"><div class="cap">Net cash at closing</div>' +
+          '<div class="val'+(r.netClosing<0?" negative":"")+'">'+usd(r.netClosing)+'</div>' +
+          '<div class="delta">'+line(r.netClosing - base.netClosing)+'</div></div>' +
+
+        taxSection +
+      '</article>';
+    }).join("");
+  }
+
+  /* ---------- inputs ---------- */
+  var MONEY = ["p1","p2","p3","payoff","fixed","concess","annualTax","buyPrice","buyCosts","improve"];
+  var PCT   = ["listPct","buyPct","ordRate"];
+
+  MONEY.concat(PCT).forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener("input", render);
+    el.addEventListener("focus", function(){ el.select(); });
+    el.addEventListener("blur", function(){
+      var v = num(id);
+      el.value = MONEY.indexOf(id) !== -1
+        ? v.toLocaleString("en-US",{maximumFractionDigits:2})
+        : v.toFixed(2);
+      render();
+    });
+  });
+  ["closeDate","buyDate","taxPaid","filing","ltRate","niit","partial","recentClaim"].forEach(function(id){
+    document.getElementById(id).addEventListener("change", render);
+  });
+
+  /* ---------- collapse controls ---------- */
+  function panels(){ return Array.prototype.slice.call(document.querySelectorAll("details.panel")); }
+  document.getElementById("expandAll").addEventListener("click", function(){
+    panels().forEach(function(p){ p.open = true; });
+  });
+  document.getElementById("collapseAll").addEventListener("click", function(){
+    panels().forEach(function(p){ p.open = false; });
+  });
+
+  var taxBtn = document.getElementById("toggleTax");
+  taxBtn.addEventListener("click", function(){
+    showTax = !showTax;
+    taxBtn.textContent = showTax ? "Hide tax detail" : "Show tax detail";
+    render();
+  });
+
+  /* ---------- tabs ---------- */
+  var tabCalc = document.getElementById("tabCalc"), tabGuide = document.getElementById("tabGuide");
+  var viewCalc = document.getElementById("viewCalc"), viewGuide = document.getElementById("viewGuide");
+  function show(which){
+    var calc = which === "calc";
+    tabCalc.setAttribute("aria-selected", calc);
+    tabGuide.setAttribute("aria-selected", !calc);
+    viewCalc.classList.toggle("hidden", !calc);
+    viewGuide.classList.toggle("hidden", calc);
+  }
+  tabCalc.addEventListener("click", function(){ show("calc"); });
+  tabGuide.addEventListener("click", function(){ show("guide"); });
+
+  /* ---------- print: open every panel, restore afterward ---------- */
+  var wasOpen = [];
+  window.addEventListener("beforeprint", function(){
+    wasOpen = panels().map(function(p){ var o = p.open; p.open = true; return o; });
+  });
+  window.addEventListener("afterprint", function(){
+    panels().forEach(function(p,i){ p.open = wasOpen[i]; });
+  });
+
+  /* ---------- light / dark ---------- */
+  var themeBtn = document.getElementById("themeBtn");
+  themeBtn.addEventListener("click", function(){
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+    themeBtn.textContent = dark ? "Dark mode" : "Light mode";
+  });
+
+  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+  render();
+})();
+</script>
+</body>
+</html>
