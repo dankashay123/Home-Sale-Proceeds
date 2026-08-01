@@ -242,6 +242,38 @@
   .sb-cell .v.negative{color:#f08a7a}
   .sb-cell .v.sm{font-size:12.5px}
 
+  .tabcount{display:inline-block;min-width:17px;padding:1px 5px;margin-left:5px;border-radius:9px;
+    background:var(--rule);color:var(--ink-soft);font-family:var(--mono);font-size:10px;
+    font-weight:700;letter-spacing:0;vertical-align:middle}
+  .tab[aria-selected="true"] .tabcount{background:var(--net);color:#08110d}
+  .tabcount:empty{display:none}
+
+  .savedbar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+    gap:12px;margin-top:18px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+  .savedtitle{font-size:19px;font-weight:650;letter-spacing:-.01em;color:var(--ink)}
+  .savedsub{font-size:12.5px;color:var(--ink-faint);margin-top:3px}
+  .scard{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:14px 16px 12px;margin-top:12px}
+  .scard-name{font-family:var(--mono);font-size:14.5px;font-weight:600;color:var(--ink);
+    line-height:1.35;word-break:break-word}
+  .scard-when{font-size:11px;color:var(--ink-faint);margin-top:3px;letter-spacing:.03em}
+  .scard-figs{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule)}
+  .scard-fig{min-width:0}
+  .scard-fig .k{font-size:9px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--ink-faint)}
+  .scard-fig .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--net);
+    font-variant-numeric:tabular-nums;margin-top:1px;white-space:nowrap}
+  .scard-fig .v.dim{color:var(--ink-soft);font-weight:600;font-size:13.5px}
+  .scard-fig .v.negative{color:var(--err)}
+  .scard-warn{font-size:11.5px;color:var(--callout-ink);background:var(--warn-wash);
+    border-left:3px solid var(--warn);padding:6px 9px;border-radius:2px;margin-top:10px}
+  .scard-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .scard-acts .btn{min-height:38px;padding:0 12px;font-size:12px}
+  .btn.danger{color:var(--err);border-color:var(--err)}
+  .savedempty{background:var(--card);border:1px dashed var(--rule-hard);border-radius:4px;
+    padding:30px 20px;text-align:center;margin-top:14px}
+  .savedempty .h{font-size:17px;font-weight:600;color:var(--ink)}
+  .savedempty .b{font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;
+    max-width:46ch;margin-left:auto;margin-right:auto}
+
   #basics{margin-top:18px;padding-top:15px;border-top:1px solid var(--rule)}
   .basics-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
   .basics-title{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ink)}
@@ -319,6 +351,7 @@
     body{background:#fff;font-size:10px}
     .wrap{max-width:none;padding:0}
     .btn,.tabs,.toolbar,.no-print,.stickybar,.panel,.legend,.toast,.alerts{display:none !important}
+    #viewSaved{display:none !important}
     .hidden{display:block !important}
     .print-only{display:block !important}
     .card{border-color:#999;break-inside:avoid}
@@ -371,6 +404,7 @@
 
   <div class="tabs no-print" role="tablist">
     <button class="tab" id="tabCalc" role="tab" aria-selected="true" type="button">Calculator</button>
+    <button class="tab" id="tabSaved" role="tab" aria-selected="false" type="button">Saved <span class="tabcount" id="savedCount"></span></button>
     <button class="tab" id="tabGuide" role="tab" aria-selected="false" type="button">Guide</button>
   </div>
 
@@ -389,6 +423,7 @@
       <button class="btn ghost sm" id="expandAll" type="button">Expand all</button>
       <button class="btn ghost sm" id="collapseAll" type="button">Collapse all</button>
       <button class="btn ghost sm" id="toggleTax" type="button">Hide tax detail</button>
+      <button class="btn sm" id="saveBtn" type="button">Save</button>
     </div>
 
     <details class="panel" id="pricePanel" open>
@@ -554,6 +589,22 @@
         <li>Estimate only, and not tax advice. The escrow settlement statement governs the cash figure. A CPA governs the tax figure.</li>
       </ul>
     </div>
+  </div>
+
+  <!-- =================== SAVED =================== -->
+  <div id="viewSaved" class="hidden" role="tabpanel" aria-labelledby="tabSaved">
+    <div class="savedbar">
+      <div>
+        <div class="savedtitle">Saved estimates</div>
+        <div class="savedsub" id="savedSub"></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost sm" id="exportBtn" type="button">Export backup</button>
+        <button class="btn ghost sm" id="importBtn" type="button">Import</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <div id="savedList"></div>
   </div>
 
   <!-- =================== GUIDE =================== -->
@@ -1441,6 +1492,215 @@
       '. Estimate only. The escrow settlement statement governs the cash figure; a CPA governs the tax figure.</div>';
   }
 
+  /* ============================ saved estimates ============================ */
+  var SKEY = "netproceeds.saved.v1";
+
+  function readSaved(){
+    try { var a = JSON.parse(localStorage.getItem(SKEY)); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function writeSaved(a){
+    try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; }
+    catch(e){ toast("Storage is full. Export a backup, then delete a few."); return false; }
+  }
+
+  function autoName(){
+    var d = new Date();
+    var stamp = d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+    var parts = [];
+    var ps = prices.slice(0,scenCount).filter(function(v){ return v > 0; });
+    if (ps.length === 1) parts.push(usd0(ps[0]) + " sale");
+    else if (ps.length > 1) parts.push(usd0(Math.max.apply(null,ps)) + " sale + " + (ps.length-1) + " more");
+    var t = num("targetAmt");
+    if (t > 0) parts.push(usd0(t) + " target");
+    if (!parts.length) parts.push("no price set");
+    return stamp + " \u00b7 " + parts.join(" \u00b7 ");
+  }
+
+  function currentMeta(){
+    var g = gather(), miss = missingList();
+    var target = num("targetAmt");
+    var need = (target > 0) ? solveForTarget(target, $("targetBasis").value, g) : null;
+    var r = null;
+    if (mode === "target"){ if (need !== null) r = compute(need, g); }
+    else { for (var i=0;i<scenCount;i++) if (prices[i] > 0){ r = compute(prices[i], g); break; } }
+    return {
+      mode: mode,
+      missing: miss,
+      need: need,
+      close: g.closeDate ? fmtDate(g.closeDate) : null,
+      netCash: r ? r.netClosing : null,
+      afterTax: r ? r.afterTax : null,
+      price: r ? r.price : null,
+      scenarios: mode === "price" ? scenCount : 1
+    };
+  }
+
+  function saveCurrent(){
+    var list = readSaved();
+    var entry = { id: "s" + Date.now(), name: autoName(), ts: Date.now(),
+                  data: snapshot(), meta: currentMeta() };
+    delete entry.data.th;
+    list.unshift(entry);
+    if (writeSaved(list)){
+      renderSaved();
+      toast("Saved. Find it in the Saved tab.");
+    }
+  }
+
+  function loadEntry(id){
+    var list = readSaved(), e = null;
+    for (var i=0;i<list.length;i++) if (list[i].id === id) e = list[i];
+    if (!e) return;
+    var d = JSON.parse(JSON.stringify(e.data));
+    delete d.th;
+    applySnapshot(d);
+    buildSeg(); buildScenInputs(); applyMode(); syncMirrors(); render(); persist();
+    showTab("calc");
+    toast("Loaded " + e.name);
+  }
+
+  function renameEntry(id){
+    var list = readSaved();
+    for (var i=0;i<list.length;i++){
+      if (list[i].id === id){
+        var n = prompt("Rename this estimate", list[i].name);
+        if (n === null) return;
+        n = String(n).trim();
+        if (!n) return;
+        list[i].name = n.slice(0,90);
+        writeSaved(list); renderSaved();
+        return;
+      }
+    }
+  }
+
+  function deleteEntry(id){
+    var list = readSaved(), keep = [];
+    for (var i=0;i<list.length;i++) if (list[i].id !== id) keep.push(list[i]);
+    writeSaved(keep); renderSaved();
+    toast("Deleted");
+  }
+
+  function shareEntry(id){
+    var list = readSaved();
+    for (var i=0;i<list.length;i++){
+      if (list[i].id === id){
+        var url = location.origin + location.pathname + "#d=" + b64e(JSON.stringify(list[i].data));
+        if (navigator.share && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+          navigator.share({ title: list[i].name, url: url }).catch(function(){});
+        } else if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(url).then(function(){ toast("Link copied"); })
+            .catch(function(){ prompt("Copy this link:", url); });
+        } else prompt("Copy this link:", url);
+        return;
+      }
+    }
+  }
+
+  function fig(k, v, cls){
+    return '<div class="scard-fig"><div class="k">'+k+'</div><div class="v '+(cls||"")+'">'+v+'</div></div>';
+  }
+
+  function renderSaved(){
+    var list = readSaved();
+    $("savedCount").textContent = list.length ? String(list.length) : "";
+    $("savedSub").textContent = list.length
+      ? list.length + (list.length === 1 ? " estimate stored on this device" : " estimates stored on this device")
+      : "Nothing saved yet";
+
+    if (!list.length){
+      $("savedList").innerHTML =
+        '<div class="savedempty"><div class="h">No saved estimates</div>' +
+        '<div class="b">Fill in the calculator and tap <strong>Save</strong>. Each one keeps every field, ' +
+        'so you can come back to a scenario later or compare two sets of assumptions side by side.</div></div>';
+      return;
+    }
+
+    $("savedList").innerHTML = list.map(function(e){
+      var m = e.meta || {};
+      var when = new Date(e.ts).toLocaleString("en-US",
+        {month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
+      var figs = "";
+      if (m.mode === "target"){
+        figs += fig("Sell at", m.need != null ? usd0(m.need) : "\u2014");
+        figs += fig("You keep", m.afterTax != null ? usd0(m.afterTax) : "\u2014",
+                    (m.afterTax != null && m.afterTax < 0) ? "negative dim" : "dim");
+      } else {
+        figs += fig("Sale price", m.price != null ? usd0(m.price) : "\u2014", "dim");
+        figs += fig("Net cash", m.netCash != null ? usd0(m.netCash) : "\u2014",
+                    (m.netCash != null && m.netCash < 0) ? "negative" : "");
+        figs += fig("After tax", m.afterTax != null ? usd0(m.afterTax) : "\u2014", "dim");
+      }
+      if (m.close) figs += fig("Closes", m.close, "dim");
+      if (m.scenarios > 1) figs += fig("Scenarios", String(m.scenarios), "dim");
+
+      var warn = (m.missing && m.missing.length)
+        ? '<div class="scard-warn">Saved while incomplete: ' + esc(m.missing.join(", ")) + '</div>' : "";
+
+      return '<div class="scard">' +
+        '<div class="scard-name">' + esc(e.name) + '</div>' +
+        '<div class="scard-when">' + when + '</div>' +
+        '<div class="scard-figs">' + figs + '</div>' + warn +
+        '<div class="scard-acts">' +
+          '<button class="btn sm sact" data-a="load" data-id="'+e.id+'" type="button">Load</button>' +
+          '<button class="btn ghost sm sact" data-a="rename" data-id="'+e.id+'" type="button">Rename</button>' +
+          '<button class="btn ghost sm sact" data-a="share" data-id="'+e.id+'" type="button">Share</button>' +
+          '<button class="btn ghost sm danger sact" data-a="delete" data-id="'+e.id+'" type="button">Delete</button>' +
+        '</div></div>';
+    }).join("");
+  }
+
+  $("savedList").addEventListener("click", function(ev){
+    var b = ev.target.closest(".sact");
+    if (!b) return;
+    var id = b.getAttribute("data-id"), a = b.getAttribute("data-a");
+    if (a === "load") loadEntry(id);
+    else if (a === "rename") renameEntry(id);
+    else if (a === "share") shareEntry(id);
+    else if (a === "delete"){ if (confirm("Delete this saved estimate?")) deleteEntry(id); }
+  });
+
+  $("saveBtn").addEventListener("click", saveCurrent);
+
+  $("exportBtn").addEventListener("click", function(){
+    var list = readSaved();
+    if (!list.length){ toast("Nothing to export yet"); return; }
+    var blob = new Blob([JSON.stringify({ app:"net-proceeds", version:1, saved:list }, null, 2)],
+      { type:"application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "net-proceeds-backup-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast("Backup file created");
+  });
+
+  $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      try {
+        var obj = JSON.parse(fr.result);
+        var incoming = Array.isArray(obj) ? obj : (obj && obj.saved);
+        if (!Array.isArray(incoming)) throw new Error("bad file");
+        var have = readSaved(), seen = {};
+        have.forEach(function(e){ seen[e.id] = 1; });
+        var added = 0;
+        incoming.forEach(function(e){
+          if (e && e.id && e.data && !seen[e.id]){ have.push(e); seen[e.id] = 1; added++; }
+        });
+        have.sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+        writeSaved(have); renderSaved();
+        toast(added ? ("Imported " + added) : "Nothing new in that file");
+      } catch(err){ toast("That file could not be read"); }
+    };
+    fr.readAsText(f);
+    this.value = "";
+  });
+
   /* ============================ wiring ============================ */
   MONEY.concat(PCT).forEach(function(id){
     var el = $(id);
@@ -1487,18 +1747,19 @@
     render(); persist();
   });
 
-  var tabCalc = $("tabCalc"), tabGuide = $("tabGuide"), viewCalc = $("viewCalc"), viewGuide = $("viewGuide");
+  var viewCalc = $("viewCalc"), viewGuide = $("viewGuide"), viewSaved = $("viewSaved");
+  var TABS = [["tabCalc","calc",viewCalc],["tabSaved","saved",viewSaved],["tabGuide","guide",viewGuide]];
   function showTab(which){
-    var calc = which === "calc";
-    tabCalc.setAttribute("aria-selected", calc);
-    tabGuide.setAttribute("aria-selected", !calc);
-    viewCalc.classList.toggle("hidden", !calc);
-    viewGuide.classList.toggle("hidden", calc);
-    $("stickyBar").style.display = calc ? "" : "none";
+    TABS.forEach(function(t){
+      var on = t[1] === which;
+      $(t[0]).setAttribute("aria-selected", on);
+      t[2].classList.toggle("hidden", !on);
+    });
+    if (which === "saved") renderSaved();
+    $("stickyBar").style.display = (which === "calc") ? "" : "none";
     window.scrollTo(0,0);
   }
-  tabCalc.addEventListener("click", function(){ showTab("calc"); });
-  tabGuide.addEventListener("click", function(){ showTab("guide"); });
+  TABS.forEach(function(t){ $(t[0]).addEventListener("click", function(){ showTab(t[1]); }); });
 
   var bar$ = $("stickyBar");
   function flipBar(){ sbMode = sbMode === "cash" ? "aftertax" : "cash"; render(); persist(); }
@@ -1527,7 +1788,10 @@
   });
 
   $("resetBtn").addEventListener("click", function(){
-    if (!confirm("Clear every entry and start over?")) return;
+    var n = readSaved().length;
+    var msg = n ? "Clear the current entries and start over?\n\nYour " + n +
+      " saved estimate" + (n===1?"":"s") + " will be kept." : "Clear every entry and start over?";
+    if (!confirm(msg)) return;
     try { localStorage.removeItem(KEY); } catch(e){}
     location.hash = "";
     location.reload();
@@ -1540,13 +1804,13 @@
     wasTax = showTax; wasGuideHidden = viewGuide.classList.contains("hidden");
     showTax = true;
     viewCalc.classList.remove("hidden"); viewGuide.classList.remove("hidden");
+    viewSaved.classList.add("hidden");
     render();
   });
   window.addEventListener("afterprint", function(){
     panels().forEach(function(p,i){ p.open = wasOpen[i]; });
     showTax = wasTax;
-    viewGuide.classList.toggle("hidden", wasGuideHidden);
-    viewCalc.classList.toggle("hidden", !wasGuideHidden);
+    showTab(wasGuideHidden ? "calc" : "guide");
     render();
   });
   $("printBtn").addEventListener("click", function(){ window.print(); });
@@ -1560,6 +1824,7 @@
   applyMode();
   syncMirrors();
   render();
+  renderSaved();
   booting = false;
 
   if ("serviceWorker" in navigator){
