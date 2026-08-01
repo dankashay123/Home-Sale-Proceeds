@@ -242,6 +242,10 @@
   .sb-cell .v.negative{color:#f08a7a}
   .sb-cell .v.sm{font-size:12.5px}
 
+  .modebar{margin-top:14px}
+  .modelabel{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+    color:var(--ink-faint);margin-bottom:6px}
+  #modeSeg button{font-family:var(--sans);font-size:13px;letter-spacing:0;padding:0 8px;line-height:1.2}
   .hidden{display:none !important}
   .print-only{display:none}
   .toolbar{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;margin-top:14px}
@@ -362,13 +366,21 @@
   <!-- =================== CALCULATOR =================== -->
   <div id="viewCalc" role="tabpanel" aria-labelledby="tabCalc">
 
+    <div class="modebar no-print">
+      <div class="modelabel">What do you know?</div>
+      <div class="seg" id="modeSeg" role="group" aria-label="Calculation mode">
+        <button type="button" data-m="price" aria-pressed="true">I know the sale price</button>
+        <button type="button" data-m="target" aria-pressed="false">I know what I need</button>
+      </div>
+    </div>
+
     <div class="toolbar no-print">
       <button class="btn ghost sm" id="expandAll" type="button">Expand all</button>
       <button class="btn ghost sm" id="collapseAll" type="button">Collapse all</button>
       <button class="btn ghost sm" id="toggleTax" type="button">Hide tax detail</button>
     </div>
 
-    <details class="panel" open>
+    <details class="panel" id="pricePanel" open>
       <summary><span class="chev"></span><span class="sum-text">
         <span class="sum-title">Sale prices</span>
         <span class="sum-note" id="scenNote">One scenario.</span></span></summary>
@@ -381,7 +393,7 @@
       </div>
     </details>
 
-    <details class="panel">
+    <details class="panel" id="targetPanel" open>
       <summary><span class="chev"></span><span class="sum-text">
         <span class="sum-title">Solve for a target</span>
         <span class="sum-note">Work backwards: enter the number you need to walk away with.</span></span></summary>
@@ -815,6 +827,7 @@
   var MONEY = ["fixed","concess","payoff","annualTax","buyPrice","buyCosts","improve","targetAmt","carryMonthly"];
   var PCT   = ["listPct","buyPct","ordRate","driftPct"];
 
+  var mode = "price";
   var scenCount = 1;
   var prices = [0, 0, 0, 0, 0];
   var anchors = prices.slice();
@@ -823,7 +836,7 @@
   var booting = true;
 
   function snapshot(){
-    var o = { n:scenCount, p:prices.slice(0,scenCount), tax:showTax, sb:sbMode,
+    var o = { n:scenCount, p:prices.slice(0,scenCount), tax:showTax, sb:sbMode, mode:mode,
       th:document.documentElement.getAttribute("data-theme") };
     STATE_KEYS.forEach(function(k){ o[k] = $(k).value; });
     CHECK_KEYS.forEach(function(k){ o[k] = $(k).checked ? 1 : 0; });
@@ -838,6 +851,7 @@
       CHECK_KEYS.forEach(function(k){ if (o[k] !== undefined && $(k)) $(k).checked = !!+o[k]; });
       if (o.tax !== undefined) showTax = !!o.tax;
       if (o.sb) sbMode = o.sb;
+      if (o.mode === "price" || o.mode === "target") mode = o.mode;
       if (o.th) setTheme(o.th);
       return true;
     } catch(e){ return false; }
@@ -992,14 +1006,20 @@
     if (!g.closeDate) out.push(["warn","No closing date set. Tax proration and the holding period are unavailable."]);
     if (!g.buyDate)   out.push(["warn","No purchase date set. Section 121 eligibility can't be evaluated."]);
 
-    var anyPrice = false;
-    for (var i=0;i<scenCount;i++) if (prices[i] > 0) anyPrice = true;
-    if (!anyPrice) out.push(["warn","Enter a sale price to see results."]);
+    if (mode === "price"){
+      var anyPrice = false;
+      for (var i=0;i<scenCount;i++) if (prices[i] > 0) anyPrice = true;
+      if (!anyPrice) out.push(["warn","Enter a sale price to see results."]);
+    } else if (num("targetAmt") <= 0){
+      out.push(["warn","Enter the amount you need to walk away with."]);
+    }
 
-    for (var j=0;j<scenCount;j++){
-      if (prices[j] > 0 && g.buyPrice > 0 && prices[j] < g.buyPrice*0.4){
-        out.push(["warn","Scenario "+(j+1)+" is far below the purchase price. A loss on a personal residence is not deductible."]);
-        break;
+    if (mode === "price"){
+      for (var j=0;j<scenCount;j++){
+        if (prices[j] > 0 && g.buyPrice > 0 && prices[j] < g.buyPrice*0.4){
+          out.push(["warn","Scenario "+(j+1)+" is far below the purchase price. A loss on a personal residence is not deductible."]);
+          break;
+        }
       }
     }
     return out;
@@ -1092,6 +1112,49 @@
       'Both columns are net after federal tax.</p>';
   }
 
+  /* ============================ solver strip ============================ */
+  function updateSolveStrip(target, tbasis, need, g){
+    var v = $("solveVal"), n = $("solveNote"), a = $("applyRow");
+    if (!(target > 0)){
+      v.textContent = "\u2014";
+      n.textContent = "Enter the amount you need to walk away with.";
+      a.innerHTML = "";
+      return;
+    }
+    if (need === null){
+      v.textContent = "Not reachable";
+      n.textContent = "No sale price under $25M produces that result with the costs and payoff entered.";
+      a.innerHTML = "";
+      return;
+    }
+    var check = compute(need, g);
+    v.textContent = usd0(need);
+    n.textContent = "At " + usd0(need) + " you net " +
+      usd0(tbasis === "cash" ? check.netClosing : check.afterTax) +
+      (tbasis === "cash" ? " in cash at closing" : " after federal tax") +
+      ". Costs of sale would be " + usd0(check.selling) +
+      ", and the excise tax alone would be " + usd0(check.tax) + ".";
+
+    a.innerHTML = '<button class="btn ghost sm" id="useSolved" type="button">' +
+      'Use ' + usd0(need) + ' as a sale price</button>';
+    $("useSolved").addEventListener("click", function(){
+      prices[0] = Math.round(need); anchors[0] = prices[0];
+      mode = "price";
+      applyMode(); buildScenInputs(); render(); persist();
+      toast("Switched to sale price mode at " + usd0(prices[0]));
+    });
+  }
+
+  /* ============================ mode ============================ */
+  function applyMode(){
+    $("pricePanel").style.display = (mode === "price") ? "" : "none";
+    $("targetPanel").style.display = (mode === "target") ? "" : "none";
+    if (mode === "price") $("pricePanel").open = true; else $("targetPanel").open = true;
+    Array.prototype.forEach.call($("modeSeg").children, function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-m") === mode);
+    });
+  }
+
   /* ============================ main render ============================ */
   function render(){
     var g = gather();
@@ -1101,38 +1164,67 @@
       return '<div class="alert '+a[0]+'">'+esc(a[1])+'</div>';
     }).join("");
 
+    /* solver runs in every mode; it never depends on a sale price being entered */
+    var target = num("targetAmt"), tbasis = $("targetBasis").value;
+    var need = (target > 0) ? solveForTarget(target, tbasis, g) : null;
+    updateSolveStrip(target, tbasis, need, g);
+
     var res = [];
-    for (var i=0;i<scenCount;i++) res.push(compute(prices[i], g));
+    if (mode === "target"){
+      if (need !== null && target > 0){
+        var rt = compute(need, g);
+        rt.label = "Required sale price";
+        res.push(rt);
+      }
+    } else {
+      for (var i=0;i<scenCount;i++){
+        if (prices[i] > 0 || scenCount === 1){
+          var rp = compute(prices[i], g);
+          rp.label = (scenCount === 1 ? "Sale price" : "Scenario " + (i+1) + " \u00b7 sale price");
+          res.push(rp);
+        }
+      }
+      var any = false;
+      for (var q=0;q<scenCount;q++) if (prices[q] > 0) any = true;
+      if (!any) res = [];
+    }
     var base = res[0];
 
     var cardsEl = $("cards");
-    cardsEl.className = "cards n" + scenCount;
+    cardsEl.className = "cards n" + res.length;
 
-    var anyPrice = false;
-    for (var q=0;q<scenCount;q++) if (prices[q] > 0) anyPrice = true;
-    if (!anyPrice){
+    if (!res.length){
       cardsEl.className = "cards";
+      var head, body;
+      if (mode === "target"){
+        if (target > 0 && need === null){
+          head = "Target not reachable";
+          body = "No sale price under $25M produces that result with the costs and payoff entered. Lower the target, or check the mortgage payoff figure.";
+        } else {
+          head = "Enter a target net above";
+          body = "Tell it what you need to walk away with and it will work backwards to the sale price that gets you there.";
+        }
+      } else {
+        head = "Enter a sale price above";
+        body = "Add your closing date, mortgage payoff, and purchase details as you go. Nothing is uploaded anywhere, and your entries save automatically.";
+      }
       cardsEl.innerHTML =
         '<div class="card" style="padding:26px 20px;text-align:center">' +
         '<div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--net)">Start here</div>' +
-        '<div style="font-size:17px;font-weight:600;margin-top:7px;color:var(--ink)">Enter a sale price above</div>' +
-        '<div style="font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;max-width:44ch;margin-left:auto;margin-right:auto">' +
-        'Add your closing date, mortgage payoff, and purchase details as you go. ' +
-        'Nothing is uploaded anywhere, and your entries save automatically.</div></div>';
+        '<div style="font-size:17px;font-weight:600;margin-top:7px;color:var(--ink)">'+head+'</div>' +
+        '<div style="font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;max-width:44ch;margin-left:auto;margin-right:auto">'+
+        body+'</div></div>';
       $("sbVals").style.gridTemplateColumns = "1fr";
       $("sbVals").innerHTML = '<div class="sb-cell"><div class="k">Net</div><div class="v">&mdash;</div></div>';
-      $("sbCap").innerHTML = "Awaiting a sale price";
+      $("sbCap").innerHTML = mode === "target" ? "Awaiting a target" : "Awaiting a sale price";
       renderWait(g, res);
-      $("solveVal").textContent = "\u2014";
-      $("solveNote").textContent = "Enter a target above.";
-      $("applyRow").innerHTML = "";
       buildPrintAssumptions(g);
       return;
     }
 
     cardsEl.innerHTML = res.map(function(r,i){
       var line = function(v){
-        if (scenCount === 1) return "";
+        if (mode !== "price" || res.length < 2) return "";
         return '<div class="delta">' + (i===0 ? "Baseline"
           : (v>=0?"+":"\u2212") + usd0(v) + " vs. Scenario 1") + '</div>';
       };
@@ -1157,7 +1249,7 @@
           '<div class="val">'+usd(r.afterTax)+'</div>' + line(r.afterTax - base.afterTax) + '</div>';
 
       return '<article class="card">' +
-        '<div class="card-head"><div class="tag">Scenario '+(i+1)+' \u00b7 sale price</div>' +
+        '<div class="card-head"><div class="tag">'+r.label+'</div>' +
         '<div class="price">'+usd(r.price)+'</div></div>' +
 
         '<div class="sect">Costs of sale</div><div class="ledger">' +
@@ -1188,46 +1280,15 @@
       '</article>';
     }).join("");
 
-    /* solver */
-    var target = num("targetAmt"), mode = $("targetBasis").value;
-    var need = solveForTarget(target, mode, g);
-    if (!isFinite(target) || target === 0){
-      $("solveVal").textContent = "\u2014";
-      $("solveNote").textContent = "Enter a target above.";
-      $("applyRow").innerHTML = "";
-    } else if (need === null){
-      $("solveVal").textContent = "Not reachable";
-      $("solveNote").textContent = "No sale price under $25M produces that result with these costs and payoff.";
-      $("applyRow").innerHTML = "";
-    } else {
-      $("solveVal").textContent = usd0(need);
-      var check = compute(need, g);
-      $("solveNote").textContent = "At " + usd0(need) + " you net " +
-        usd0(mode === "cash" ? check.netClosing : check.afterTax) +
-        (mode === "cash" ? " in cash at closing" : " after federal tax") +
-        ". Costs of sale would be " + usd0(check.selling) + ".";
-      var btns = "";
-      for (var k=0;k<scenCount;k++) btns += '<button class="btn ghost sm applyBtn" type="button" data-i="'+k+'">Apply to Scenario '+(k+1)+'</button>';
-      $("applyRow").innerHTML = btns;
-      Array.prototype.forEach.call(document.querySelectorAll(".applyBtn"), function(b){
-        b.addEventListener("click", function(){
-          var i = +b.getAttribute("data-i");
-          prices[i] = Math.round(need); anchors[i] = prices[i];
-          buildScenInputs(); render(); persist();
-          toast("Scenario " + (i+1) + " set to " + usd0(prices[i]));
-        });
-      });
-    }
-
     renderWait(g, res);
 
     /* sticky bar */
-    $("sbVals").style.gridTemplateColumns = "repeat(" + scenCount + ",minmax(0,1fr))";
+    $("sbVals").style.gridTemplateColumns = "repeat(" + res.length + ",minmax(0,1fr))";
     $("sbVals").innerHTML = res.map(function(r,i){
       var v = sbMode === "cash" ? r.netClosing : r.afterTax;
-      var txt = scenCount >= 4 ? usdK(v) : usd0(v);
-      return '<div class="sb-cell"><div class="k">'+(scenCount===1?"Net":"S"+(i+1))+'</div>' +
-        '<div class="v'+(v<0?" negative":"")+(scenCount>=4?" sm":"")+'">'+txt+'</div></div>';
+      var txt = res.length >= 4 ? usdK(v) : usd0(v);
+      return '<div class="sb-cell"><div class="k">'+(res.length===1?"Net":"S"+(i+1))+'</div>' +
+        '<div class="v'+(v<0?" negative":"")+(res.length>=4?" sm":"")+'">'+txt+'</div></div>';
     }).join("");
     $("sbCap").innerHTML = (sbMode === "cash" ? "Net cash at closing" : "Net after federal tax") + " &middot; tap to switch";
 
@@ -1293,7 +1354,17 @@
     render();
   });
 
-  function panels(){ return Array.prototype.slice.call(document.querySelectorAll("details.panel")); }
+  Array.prototype.forEach.call($("modeSeg").children, function(b){
+    b.addEventListener("click", function(){
+      mode = b.getAttribute("data-m");
+      applyMode(); render(); persist();
+    });
+  });
+
+  function panels(){
+    return Array.prototype.slice.call(document.querySelectorAll("details.panel"))
+      .filter(function(p){ return p.style.display !== "none"; });
+  }
   $("expandAll").addEventListener("click", function(){ panels().forEach(function(p){ p.open = true; }); });
   $("collapseAll").addEventListener("click", function(){ panels().forEach(function(p){ p.open = false; }); });
 
@@ -1353,6 +1424,7 @@
   var wasOpen = [], wasTax = true, wasGuideHidden = true;
   window.addEventListener("beforeprint", function(){
     wasOpen = panels().map(function(p){ var o = p.open; p.open = true; return o; });
+    render();
     wasTax = showTax; wasGuideHidden = viewGuide.classList.contains("hidden");
     showTax = true;
     viewCalc.classList.remove("hidden"); viewGuide.classList.remove("hidden");
@@ -1373,6 +1445,7 @@
   taxBtn.textContent = showTax ? "Hide tax detail" : "Show tax detail";
   buildSeg();
   buildScenInputs();
+  applyMode();
   render();
   booting = false;
 
