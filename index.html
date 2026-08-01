@@ -242,6 +242,17 @@
   .sb-cell .v.negative{color:#f08a7a}
   .sb-cell .v.sm{font-size:12.5px}
 
+  #basics{margin-top:18px;padding-top:15px;border-top:1px solid var(--rule)}
+  .basics-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+  .basics-title{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ink)}
+  .basics-prog{font-family:var(--mono);font-size:11px;color:var(--ink-faint);white-space:nowrap}
+  .basics-prog.done{color:var(--net)}
+  .basics-note{font-size:12px;color:var(--ink-faint);margin-top:11px;line-height:1.45}
+  .input-shell.todo{border-color:var(--warn);border-style:dashed}
+  .card-incomplete{background:var(--warn-wash);color:var(--callout-ink);font-size:11px;font-weight:600;
+    letter-spacing:.04em;padding:7px 16px;border-bottom:1px solid var(--rule)}
+  .sb-missing{text-align:center;font-size:12px;color:rgba(255,255,255,.82);line-height:1.35;padding:1px 4px 2px}
+  .sb-missing b{color:#eeb475;font-weight:600}
   .modebar{margin-top:14px}
   .modelabel{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
     color:var(--ink-faint);margin-bottom:6px}
@@ -390,6 +401,30 @@
           <div class="seg" id="scenSeg" role="group" aria-label="Number of scenarios"></div>
         </div>
         <div class="scenwrap" id="scenInputs"></div>
+
+        <div id="basics">
+          <div class="basics-head">
+            <span class="basics-title">Also needed for an accurate number</span>
+            <span class="basics-prog" id="basicsProg"></span>
+          </div>
+          <div class="fields">
+            <div class="field"><label for="m_payoff">Mortgage payoff</label>
+              <div class="input-shell"><span class="affix">$</span>
+              <input id="m_payoff" type="text" inputmode="decimal" placeholder="Required"></div></div>
+            <div class="field"><label for="m_closeDate">Closing date</label>
+              <div class="input-shell"><input id="m_closeDate" type="date"></div></div>
+            <div class="field"><label for="m_annualTax">Annual property tax</label>
+              <div class="input-shell"><span class="affix">$</span>
+              <input id="m_annualTax" type="text" inputmode="decimal" placeholder="Required"></div></div>
+            <div class="field"><label for="m_buyDate">Purchase date</label>
+              <div class="input-shell"><input id="m_buyDate" type="date"></div></div>
+            <div class="field wide"><label for="m_buyPrice">Purchase price</label>
+              <div class="input-shell"><span class="affix">$</span>
+              <input id="m_buyPrice" type="text" inputmode="decimal" placeholder="Required"></div></div>
+          </div>
+          <div class="basics-note">Enter 0 where it genuinely is zero, such as a home owned free and clear.
+            These same fields appear in the detailed panels below and stay in sync with them.</div>
+        </div>
       </div>
     </details>
 
@@ -432,7 +467,7 @@
           <div class="field"><label for="concess">Buyer concessions</label>
             <div class="input-shell"><span class="affix">$</span><input id="concess" type="text" inputmode="decimal" value="0"></div></div>
           <div class="field"><label for="payoff">Mortgage payoff</label>
-            <div class="input-shell"><span class="affix">$</span><input id="payoff" type="text" inputmode="decimal" value="0" placeholder="0"></div></div>
+            <div class="input-shell"><span class="affix">$</span><input id="payoff" type="text" inputmode="decimal" value="" placeholder="Required"></div></div>
         </div>
       </div>
     </details>
@@ -446,7 +481,7 @@
           <div class="field"><label for="closeDate">Closing date</label>
             <div class="input-shell"><input id="closeDate" type="date" value=""></div></div>
           <div class="field"><label for="annualTax">Annual property tax</label>
-            <div class="input-shell"><span class="affix">$</span><input id="annualTax" type="text" inputmode="decimal" value="0" placeholder="0"></div></div>
+            <div class="input-shell"><span class="affix">$</span><input id="annualTax" type="text" inputmode="decimal" value="" placeholder="Required"></div></div>
           <div class="field wide"><label for="taxPaid">Paid so far this year</label>
             <div class="input-shell"><select id="taxPaid">
               <option value="0">Nothing paid</option>
@@ -466,7 +501,7 @@
           <div class="field"><label for="buyDate">Purchase date</label>
             <div class="input-shell"><input id="buyDate" type="date" value=""></div></div>
           <div class="field"><label for="buyPrice">Purchase price</label>
-            <div class="input-shell"><span class="affix">$</span><input id="buyPrice" type="text" inputmode="decimal" value="0" placeholder="0"></div></div>
+            <div class="input-shell"><span class="affix">$</span><input id="buyPrice" type="text" inputmode="decimal" value="" placeholder="Required"></div></div>
           <div class="field"><label for="buyCosts">Buy-side costs</label>
             <div class="input-shell"><span class="affix">$</span><input id="buyCosts" type="text" inputmode="decimal" value="0"></div></div>
           <div class="field"><label for="improve">Capital improvements</label>
@@ -1003,9 +1038,6 @@
     if (g.fixed < 0){ out.push(["err","Fixed closing costs can't be negative."]); bad("fixed",true); }
     if (g.ordRate < 0 || g.ordRate > 60){ out.push(["err","Ordinary income rate should be between 0% and 60%."]); bad("ordRate",true); }
     if (g.annualTax < 0){ out.push(["err","Annual property tax can't be negative."]); bad("annualTax",true); }
-    if (!g.closeDate) out.push(["warn","No closing date set. Tax proration and the holding period are unavailable."]);
-    if (!g.buyDate)   out.push(["warn","No purchase date set. Section 121 eligibility can't be evaluated."]);
-
     if (mode === "price"){
       var anyPrice = false;
       for (var i=0;i<scenCount;i++) if (prices[i] > 0) anyPrice = true;
@@ -1112,6 +1144,88 @@
       'Both columns are net after federal tax.</p>';
   }
 
+  /* ============================ required fields + mirrors ============================ */
+  var MIRRORS = [
+    ["m_payoff","payoff","Mortgage payoff","money"],
+    ["m_closeDate","closeDate","Closing date","date"],
+    ["m_annualTax","annualTax","Annual property tax","money"],
+    ["m_buyDate","buyDate","Purchase date","date"],
+    ["m_buyPrice","buyPrice","Purchase price","money"]
+  ];
+
+  function isBlank(id){ return String($(id).value).trim() === ""; }
+
+  function missingList(){
+    var out = [];
+    if (mode === "price"){
+      var any = false;
+      for (var i=0;i<scenCount;i++) if (prices[i] > 0) any = true;
+      if (!any) out.push("Sale price");
+    } else if (num("targetAmt") <= 0){
+      out.push("Target net");
+    }
+    MIRRORS.forEach(function(m){ if (isBlank(m[1])) out.push(m[2]); });
+    return out;
+  }
+
+  function syncMirrors(){
+    MIRRORS.forEach(function(m){
+      var mir = $(m[0]), src = $(m[1]);
+      if (document.activeElement !== mir) mir.value = src.value;
+      var blank = String(src.value).trim() === "";
+      var ms = mir.closest(".input-shell"), ss = src.closest(".input-shell");
+      if (ms) ms.classList.toggle("todo", blank);
+      if (ss) ss.classList.toggle("todo", blank);
+    });
+    var miss = missingList(), total = MIRRORS.length + 1, done = total - miss.length;
+    var pg = $("basicsProg");
+    pg.textContent = done + " of " + total + " complete";
+    pg.classList.toggle("done", miss.length === 0);
+  }
+
+  MIRRORS.forEach(function(m){
+    var mir = $(m[0]), src = $(m[1]);
+    mir.addEventListener("input", function(){ src.value = mir.value; render(); });
+    mir.addEventListener("change", function(){ src.value = mir.value; render(); persist(); });
+    mir.addEventListener("focus", function(){ if (m[3] === "money") mir.select(); });
+    mir.addEventListener("blur", function(){
+      if (m[3] === "money" && String(mir.value).trim() !== ""){
+        mir.value = numOf(mir.value).toLocaleString("en-US",{maximumFractionDigits:2});
+      }
+      src.value = mir.value; render(); persist();
+    });
+  });
+
+  /* ============================ sticky bar ============================ */
+  function updateStickyBar(res, g, need, miss){
+    var vals = $("sbVals"), cap = $("sbCap");
+    if (miss.length){
+      vals.style.gridTemplateColumns = "1fr";
+      var shown = miss.slice(0,3).join(", ");
+      var extra = miss.length > 3 ? " and " + (miss.length-3) + " more" : "";
+      cap.textContent = "Not ready yet";
+      vals.innerHTML = '<div class="sb-missing">Still needed: <b>' + esc(shown + extra) + '</b></div>';
+      return;
+    }
+    if (mode === "target"){
+      vals.style.gridTemplateColumns = "1fr";
+      var showPrice = (sbMode === "cash");
+      var v = showPrice ? need : (res[0] ? res[0].afterTax : 0);
+      cap.innerHTML = (showPrice ? "Required sale price" : "Net after federal tax at that price") + " &middot; tap to switch";
+      vals.innerHTML = '<div class="sb-cell"><div class="k">' + (showPrice ? "Sell at" : "You keep") + '</div>' +
+        '<div class="v' + (v < 0 ? " negative" : "") + '">' + usd0(v) + '</div></div>';
+      return;
+    }
+    vals.style.gridTemplateColumns = "repeat(" + res.length + ",minmax(0,1fr))";
+    vals.innerHTML = res.map(function(r,i){
+      var v = sbMode === "cash" ? r.netClosing : r.afterTax;
+      var txt = res.length >= 4 ? usdK(v) : usd0(v);
+      return '<div class="sb-cell"><div class="k">' + (res.length===1?"Net":"S"+(i+1)) + '</div>' +
+        '<div class="v' + (v<0?" negative":"") + (res.length>=4?" sm":"") + '">' + txt + '</div></div>';
+    }).join("");
+    cap.innerHTML = (sbMode === "cash" ? "Net cash at closing" : "Net after federal tax") + " &middot; tap to switch";
+  }
+
   /* ============================ solver strip ============================ */
   function updateSolveStrip(target, tbasis, need, g){
     var v = $("solveVal"), n = $("solveNote"), a = $("applyRow");
@@ -1150,6 +1264,9 @@
     $("pricePanel").style.display = (mode === "price") ? "" : "none";
     $("targetPanel").style.display = (mode === "target") ? "" : "none";
     if (mode === "price") $("pricePanel").open = true; else $("targetPanel").open = true;
+    var host = (mode === "price") ? $("pricePanel") : $("targetPanel");
+    var body = host.querySelector(".panel-body");
+    if (body && $("basics").parentNode !== body) body.appendChild($("basics"));
     Array.prototype.forEach.call($("modeSeg").children, function(b){
       b.setAttribute("aria-pressed", b.getAttribute("data-m") === mode);
     });
@@ -1158,6 +1275,8 @@
   /* ============================ main render ============================ */
   function render(){
     var g = gather();
+    var miss = missingList();
+    syncMirrors();
 
     var alerts = validate(g);
     $("alerts").innerHTML = alerts.map(function(a){
@@ -1214,9 +1333,7 @@
         '<div style="font-size:17px;font-weight:600;margin-top:7px;color:var(--ink)">'+head+'</div>' +
         '<div style="font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;max-width:44ch;margin-left:auto;margin-right:auto">'+
         body+'</div></div>';
-      $("sbVals").style.gridTemplateColumns = "1fr";
-      $("sbVals").innerHTML = '<div class="sb-cell"><div class="k">Net</div><div class="v">&mdash;</div></div>';
-      $("sbCap").innerHTML = mode === "target" ? "Awaiting a target" : "Awaiting a sale price";
+      updateStickyBar(res, g, need, miss.length ? miss : ["Sale price"]);
       renderWait(g, res);
       buildPrintAssumptions(g);
       return;
@@ -1251,6 +1368,7 @@
       return '<article class="card">' +
         '<div class="card-head"><div class="tag">'+r.label+'</div>' +
         '<div class="price">'+usd(r.price)+'</div></div>' +
+        (miss.length ? '<div class="card-incomplete">Incomplete: '+esc(miss.join(", "))+'</div>' : '') +
 
         '<div class="sect">Costs of sale</div><div class="ledger">' +
           row("listing","Listing commission", g.listPct.toFixed(2)+"% of sale price", usd(r.listing)) +
@@ -1283,14 +1401,7 @@
     renderWait(g, res);
 
     /* sticky bar */
-    $("sbVals").style.gridTemplateColumns = "repeat(" + res.length + ",minmax(0,1fr))";
-    $("sbVals").innerHTML = res.map(function(r,i){
-      var v = sbMode === "cash" ? r.netClosing : r.afterTax;
-      var txt = res.length >= 4 ? usdK(v) : usd0(v);
-      return '<div class="sb-cell"><div class="k">'+(res.length===1?"Net":"S"+(i+1))+'</div>' +
-        '<div class="v'+(v<0?" negative":"")+(res.length>=4?" sm":"")+'">'+txt+'</div></div>';
-    }).join("");
-    $("sbCap").innerHTML = (sbMode === "cash" ? "Net cash at closing" : "Net after federal tax") + " &middot; tap to switch";
+    updateStickyBar(res, g, need, miss);
 
     buildPrintAssumptions(g);
   }
@@ -1336,6 +1447,7 @@
     el.addEventListener("input", render);
     el.addEventListener("focus", function(){ el.select(); });
     el.addEventListener("blur", function(){
+      if (String(el.value).trim() === "" && MONEY.indexOf(id) !== -1){ render(); persist(); return; }
       var v = numOf(el.value);
       el.value = MONEY.indexOf(id) !== -1
         ? v.toLocaleString("en-US",{maximumFractionDigits:2}) : v.toFixed(2);
@@ -1446,6 +1558,7 @@
   buildSeg();
   buildScenInputs();
   applyMode();
+  syncMirrors();
   render();
   booting = false;
 
