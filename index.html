@@ -28,6 +28,9 @@
     --callout-ink:#6d4310;
     --callout-ink-strong:#4f3009;
     --head-ink:#ffffff;
+    --input-bg:#ffffff;
+    --input-ink:#1a201d;
+    --accent-line:#2c3a35;
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
@@ -55,6 +58,10 @@
     --callout-ink:#f0d6b4;
     --callout-ink-strong:#ffe9cc;
     --head-ink:#f2f6f4;
+    --input-bg:#111614;
+    --input-ink:#f2f6f4;
+    --accent-line:#63d6a6;
+    color-scheme:dark;
   }
 
   *{box-sizing:border-box}
@@ -93,19 +100,19 @@
     transform:rotate(-45deg);transition:transform .18s ease;margin-top:-2px}
   .panel[open] > summary .chev{transform:rotate(45deg);margin-top:-4px}
   .sum-text{flex:1;min-width:0}
-  .sum-title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--ink)}
-  .sum-note{font-size:12px;color:var(--ink-faint);margin-top:3px}
+  .sum-title{display:block;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--ink)}
+  .sum-note{display:block;font-size:13px;color:var(--ink-soft);margin-top:4px;line-height:1.4}
   .panel-body{padding:2px 22px 22px}
 
   .fields{display:grid;gap:16px 22px;grid-template-columns:repeat(auto-fit,minmax(172px,1fr))}
-  .field label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
-  .input-shell{display:flex;align-items:center;gap:2px;border:1px solid var(--rule-hard);border-radius:2px;background:#fff;padding:0 10px;transition:border-color .15s ease, box-shadow .15s ease}
+  .field label{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+  .input-shell{display:flex;align-items:center;gap:2px;border:1px solid var(--rule-hard);border-radius:2px;background:var(--input-bg);padding:0 10px;transition:border-color .15s ease, box-shadow .15s ease}
   .input-shell:focus-within{border-color:var(--net);box-shadow:0 0 0 3px var(--net-wash)}
-  .input-shell .affix{font-family:var(--mono);font-size:14px;color:var(--ink-soft)}
-  .input-shell input,.input-shell select{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:15px;color:var(--ink);padding:10px 0;font-variant-numeric:tabular-nums}
+  .input-shell .affix{font-family:var(--mono);font-size:15px;color:var(--ink-soft)}
+  .input-shell input,.input-shell select{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:16px;color:var(--input-ink);padding:11px 0;font-variant-numeric:tabular-nums}
   .input-shell select{font-family:var(--sans);cursor:pointer}
-  .scenario-field label{color:var(--slate)}
-  .scenario-field .input-shell{border-color:var(--slate);border-width:1.5px}
+  .scenario-field label{color:var(--ink)}
+  .scenario-field .input-shell{border-color:var(--accent-line);border-width:1.5px}
 
   .check{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink-soft);line-height:1.35;padding-top:4px}
   .check input{margin:2px 0 0;accent-color:var(--net);width:15px;height:15px;flex:none}
@@ -197,6 +204,7 @@
       --net-wash:#e8f2ed; --tax-wash:#f1efe8; --warn:#9a5b16; --warn-wash:#fbf1e4;
       --slate:#2c3a35; --body-text:#3c4642; --code-bg:#eaeee9;
       --callout-ink:#6d4310; --callout-ink-strong:#4f3009; --head-ink:#ffffff;
+      --input-bg:#ffffff; --input-ink:#1a201d; --accent-line:#2c3a35; color-scheme:light;
     }
     body{background:#fff;font-size:10px}
     .guide p,.guide ul,.guide ol,.deftable,.callout,.calc{font-size:10px}
